@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>GPS 即時定位地圖</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    var map;
+
+    // 以「內部實心圓 + 外圈同色半透明環」做 bullseye 樣式
+    function makeBullseye(color) {
+      const outer = L.circleMarker([0,0], {
+        radius: 9,          // 外圈半徑
+        color: color,       // 外圈顏色
+        weight: 4,          // 外圈線寬
+        opacity: 0.5,       // 外圈透明度（半透明）
+        fillOpacity: 0      // 外圈不填色（只留環形）
+      });
+      const inner = L.circleMarker([0,0], {
+        radius: 5,          // 內點半徑
+        color: "#ffffff",   // 內點外框白色，讓顏色更清晰
+        weight: 1.5,        // 內點外框線寬
+        fillColor: color,   // 內點填色 = 主色
+        fillOpacity: 0.7,   // 內點稍微半透明
+        opacity: 1.0
+      });
+
+      return {
+        addTo(m){ outer.addTo(m); inner.addTo(m); },
+        setLatLng(ll){ outer.setLatLng(ll); inner.setLatLng(ll); }
+      };
+    }
+
+    // 五種資料各自一個 bullseye
+    var gpsMarker, geomMarker, mlpMarker, fusedMarker, kfMarker;
+
+    function initMap() {
+      map = L.map('map').setView([0,0], 24);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      gpsMarker   = makeBullseye("red");     gpsMarker.addTo(map);
+      geomMarker  = makeBullseye("purple");  geomMarker.addTo(map);
+      mlpMarker   = makeBullseye("green");   mlpMarker.addTo(map);
+      fusedMarker = makeBullseye("blue");    fusedMarker.addTo(map);
+      kfMarker    = makeBullseye("orange");  kfMarker.addTo(map);
+    }
+
+    // 提供給 PyQt 更新位置（保持和你現在的資料結構相同）
+    window.updateMarkers = function(data){
+      try{
+        if(!data) return;
+        if(data.gps)   gpsMarker.setLatLng(data.gps);
+        if(data.geom)  geomMarker.setLatLng(data.geom);
+        if(data.mlp)   mlpMarker.setLatLng(data.mlp);
+        if(data.fused){
+          fusedMarker.setLatLng(data.fused);
+          map.setView(data.fused, map.getZoom()); // 追蹤融合點
+        }
+        if(data.kf)    kfMarker.setLatLng(data.kf);
+      }catch(e){
+        console.error("updateMarkers error:", e);
+      }
+    };
+
+    window.onload = initMap;
+  </script>
+</body>
+</html>
