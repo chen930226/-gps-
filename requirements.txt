@@ -1,0 +1,10 @@
+numpy==1.26.4
+pandas==2.2.2
+scipy==1.14.1
+torch==2.3.0
+scikit-learn==1.5.0
+matplotlib==3.9.0
+pyserial==3.5
+PyQt5==5.15.10
+PyQtWebEngine==5.15.10
+joblib==1.4.2
