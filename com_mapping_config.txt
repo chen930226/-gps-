@@ -1,3 +1,0 @@
-COM7:A
-COM8:B
-COM9:C
